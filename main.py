@@ -65,6 +65,8 @@ def main():
         print("\n1. Add a new transaction")
         print("2. View transactions and summary within a data range")
         print("3. Exit")
+        choice = input("Enter your choice (1-3): ")
+        
         if choice == "1":
             add()
         elif choice == "2":
