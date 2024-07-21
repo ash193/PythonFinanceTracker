@@ -6,6 +6,7 @@ from data_entry import get_amount, get_category, get_date, get_description
 class CSV:
     CSV_FILE = "finance_data.csv"
     COLUMNS = ["date", "amount", "category", "description"]
+    date_format = "%m-%d-%Y"
     
     @classmethod
     def initialize_csv(cls):
@@ -28,16 +29,56 @@ class CSV:
             writer = csv.DictWriter(csvfile, fieldnames=cls.COLUMNS)
             writer.writerow(new_entry)
         print("Entry added successfully")
+    
+    @classmethod
+    def get_transactions(cls, start_date, end_date):
+        df = pd.read_csv(cls.CSV_FILE)
+        df["date"] = pd.to_datetime(df["date"], format=CSV.date_format)
+        start_date = datetime.strptime(start_date, CSV.date_format)
+        end_date = datetime.strptime(end_date, CSV.date_format)
         
+        mask = (df["date"] >= start_date) & (df["date"] <= end_date)
+        filtered_df = df.loc[mask] 
+        
+        if filtered_df.empty:
+            print("No transactions found in the given date range")
+        else:
+            print(f"Transactions from {start_date.strftime(CSV.date_format)} to {end_date.strftime(CSV.date_format)}")
+            print(filtered_df.to_string(index=False, formatters={"date": lambda x: x.strftime(CSV.date_format)}))
+            total_income = filtered_df[filtered_df["category"] == "Income"]["amount"].sum()
+            total_expense = filtered_df[filtered_df["category"] == "Expense"]["amount"].sum()
+            print("\nSummary:")
+            print(f"Total Income: ${total_income:.2f}")
+            print(f"Total Expense: ${total_expense:.2f}")
+            print(f"Net Savings: ${(total_income)}")
 def add():
     CSV.initialize_csv()
-    date = get_date("Enter the date of the transaction (mm--dd--yy) or enter for today's date: ", allow_default=True)
+    date = get_date("Enter the date of the transaction (mm--dd--yy) or enter for today's date: ", 
+                    allow_default=True)
     amount = get_amount()
     category = get_category()
     description = get_description()
     CSV.add_entry(date, amount, category, description)
         
+def main():
+    while True:
+        print("\n1. Add a new transaction")
+        print("2. View transactions and summary within a data range")
+        print("3. Exit")
+        if choice == "1":
+            add()
+        elif choice == "2":
+            start_date = get_date("Enter the start date (mm-dd-yyyy): ")
+            end_date = get_date("Enter the end date (mm-dd-yyyy): ")
+            df = CSV.get_transactions(start_date, end_date)
+        elif choice == "3":
+            print("Exiting")
+            break
+        else:
+            print("Invalid choice. Enter 1, 2 or 3.")
 
-add()
+if __name__ == "__main__":
+    main()
+
         
         
