@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 from datetime import datetime
 from data_entry import get_amount, get_category, get_date, get_description
+import matplotlib.pyplot as plt
 
 class CSV:
     CSV_FILE = "finance_data.csv"
@@ -50,7 +51,9 @@ class CSV:
             print("\nSummary:")
             print(f"Total Income: ${total_income:.2f}")
             print(f"Total Expense: ${total_expense:.2f}")
-            print(f"Net Savings: ${(total_income)}")
+            print(f"Net Savings: ${(total_income - total_expense):.2f}")
+            
+        return filtered_df
 def add():
     CSV.initialize_csv()
     date = get_date("Enter the date of the transaction (mm--dd--yy) or enter for today's date: ", 
@@ -59,6 +62,23 @@ def add():
     category = get_category()
     description = get_description()
     CSV.add_entry(date, amount, category, description)
+    
+def plot_transactions(df):
+    df.set_index("date", inplace=True)
+    income_df = df[df["category"] == "Income"].resample("D").sum().reindex(df.index, fill_value=0)
+    expense_df = df[df["category"] == "Expense"].resample("D").sum().reindex(df.index, fill_value=0)
+    
+    plt.figure(figsize=(10, 5))
+    plt.plot(income_df.index, income_df["amount"], label="Income", color="g")
+    plt.plot(expense_df.index, expense_df["amount"], label="Expense", color="r")
+    plt.xlabel("Date")
+    plt.ylabel("Amount")
+    plt.title("Income and Expenses Over Time")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+    
+    
         
 def main():
     while True:
@@ -73,8 +93,10 @@ def main():
             start_date = get_date("Enter the start date (mm-dd-yyyy): ")
             end_date = get_date("Enter the end date (mm-dd-yyyy): ")
             df = CSV.get_transactions(start_date, end_date)
+            if input("Do you want to see a plot (y/n) ").lower()== "y":
+                plot_transactions(df)
         elif choice == "3":
-            print("Exiting")
+            print("Exiting...")
             break
         else:
             print("Invalid choice. Enter 1, 2 or 3.")
